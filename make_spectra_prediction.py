@@ -35,25 +35,26 @@ flags.DEFINE_string('output_file', 'annotated.sdf',
 
 
 def main(_):
-  logging.info('Loading weights from %s', FLAGS.weights_dir)
+  print('Loading weights from %s', FLAGS.weights_dir)
+  print(FLAGS.weights_dir)
   predictor = spectra_predictor.NeimsSpectraPredictor(
       model_checkpoint_dir=FLAGS.weights_dir)
 
-  logging.info('Loading molecules from %s', FLAGS.input_file)
+  print('Loading molecules from %s', FLAGS.input_file)
   mols_from_file = spectra_predictor.get_mol_list_from_sdf(
       FLAGS.input_file)
   fingerprints, mol_weights = predictor.get_inputs_for_model_from_mol_list(
       mols_from_file)
 
-  logging.info('Making predictions ...')
+  print('Making predictions ...')
   spectra_predictions = predictor.make_spectra_prediction(
       fingerprints, mol_weights)
 
-  logging.info('Updating molecules in place with predictions.')
+  print('Updating molecules in place with predictions.')
   spectra_predictor.update_mols_with_spectra(mols_from_file,
                                              spectra_predictions)
 
-  logging.info('Writing predictions to %s', FLAGS.output_file)
+  print('Writing predictions to %s', FLAGS.output_file)
   with open(FLAGS.output_file, 'w') as f:
     spectra_predictor.write_rdkit_mols_to_sdf(mols_from_file, f)
 

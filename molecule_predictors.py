@@ -32,6 +32,7 @@ import similarity as similarity_lib
 import util
 import numpy as np
 import tensorflow as tf
+from hparam import HParams
 
 MODEL_REGISTRY = {}
 
@@ -114,7 +115,7 @@ class MassSpectraPrediction(object):
   def get_default_hparams(self):
     """Construct default hparams values."""
 
-    hparams = tf.contrib.training.HParams(
+    hparams = HParams(
         init_weights='default',
         init_bias='default',
         label_names=[fmap_constants.INCHIKEY],
@@ -159,7 +160,7 @@ class MassSpectraPrediction(object):
 
   def _make_linear_prediction(self, learned_features, hparams):
     """A single linear layer to make the final spectra prediction."""
-    return tf.layers.dense(
+    return tf.compat.v1.layers.dense(
         inputs=learned_features,
         units=hparams.max_mass_spec_peak_loc,
         activation=None)
@@ -188,7 +189,7 @@ class MassSpectraPrediction(object):
         example, for the cross entropy loss the prediction is a probability
         vector whereas the prediction_for_loss is the corresponding logits.
     """
-    with tf.variable_scope('spectrum_predictor', reuse=reuse):
+    with tf.compat.v1.variable_scope('spectrum_predictor', reuse=reuse):
       learned_features = self._make_learned_features(feature_dict, hparams,
                                                      mode)
 
@@ -265,7 +266,8 @@ class MassSpectraPrediction(object):
     total_mass = tf.cast(tf.round(total_mass), dtype=tf.int32)
 
     # We mask out things that are to the right of total mass
-    indices = np.arange(raw_prediction.shape[-1].value)[np.newaxis, ...]
+    #original: indices = np.arange(raw_prediction.shape[-1].value)[np.newaxis, ...]
+    indices = np.arange(raw_prediction.shape[-1])[np.newaxis, ...]
     right_of_total_mass = indices > (
         total_mass[..., tf.newaxis] +
         hparams.max_prediction_above_molecule_mass)
@@ -389,20 +391,20 @@ class MLPSpectraPrediction(MassSpectraPrediction):
     return ['num_hidden_units', 'dropout_rate', 'num_hidden_layers']
 
   def _batch_norm(self, features, is_training):
-    return tf.layers.batch_normalization(features, training=is_training)
+    return tf.compat.v1.layers.batch_normalization(features, training=is_training)
 
   def _residual_block(self, features, hparams, activation_fn, is_training):
     """Construct a single block for a residual network."""
 
     features = self._batch_norm(features, is_training)
     features = activation_fn(features)
-    features = tf.layers.dropout(
+    features = tf.compat.v1.layers.dropout(
         inputs=features, rate=hparams.dropout_rate, training=is_training)
-    features = tf.layers.dense(
+    features = tf.compat.v1.layers.dense(
         features, (hparams.resnet_bottleneck_factor * hparams.num_hidden_units))
     features = self._batch_norm(features, is_training=is_training)
     features = activation_fn(features)
-    return tf.layers.dense(features, hparams.num_hidden_units)
+    return tf.compat.v1.layers.dense(features, hparams.num_hidden_units)
 
   def _make_learned_features(self, feature_dict, hparams, mode):
 
@@ -414,7 +416,7 @@ class MLPSpectraPrediction(MassSpectraPrediction):
     layer_output = feature_dict[feature_to_use]
 
     if hparams.num_hidden_layers > 0:
-      layer_output = tf.layers.dense(
+      layer_output = tf.compat.v1.layers.dense(
           inputs=layer_output,
           units=hparams.num_hidden_units,
           activation=activation_fn)

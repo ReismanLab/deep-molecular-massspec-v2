@@ -183,7 +183,7 @@ def _find_query_rank(similarities, library_keys, query_keys):
       the lowest query rank.
   """
 
-  (highest_rank, lowest_rank, avg_rank, best_query_similarities) = tf.py_func(
+  (highest_rank, lowest_rank, avg_rank, best_query_similarities) = tf.compat.v1.py_func(
       _find_query_rank_helper, [similarities, library_keys, query_keys],
       (tf.int32, tf.int32, tf.float32, tf.float32),
       stateful=False)
@@ -252,7 +252,7 @@ def _max_similarity_match(library,
         tf.reduce_all(tf.reduce_any(library_filter, axis=0)), error_tensors)
     with tf.control_dependencies([assert_op]):
       library_filter = tf.transpose(library_filter, (1, 0))
-    similarities = tf.where(
+    similarities = tf.compat.v1.where(
         library_filter, similarities,
         _SIMILARITY_FOR_FILTERED_ELEMENTS * tf.ones_like(similarities))
   argmax = tf.argmax(similarities, axis=1)
@@ -308,7 +308,7 @@ def _make_library(predicted_dict,
 
     num_elements = num_elements_observed
     if predicted_dict is not None:
-      num_elements_predicted = tf.contrib.framework.nest.flatten(
+      num_elements_predicted = tf.nest.flatten(
           predicted_dict)[0].shape[0]
       assert num_elements_predicted is not None, ('batch_size must be '
                                                   'statically inferrable for '
@@ -334,11 +334,11 @@ def _make_library(predicted_dict,
       # Global variables get restored from checkpoints. This would be bad here,
       # since we want to recompute the library with respect to the predictions
       # of the current model.
-      return tf.get_local_variable(
+      return tf.compat.v1.get_local_variable(
           name=name,
           shape=library_shape,
           dtype=tf.float32,
-          initializer=tf.zeros_initializer)
+          initializer=tf.compat.v1.zeros_initializer)
 
     def make_init_op(value_op):
       prediction = util.map_predictor(
@@ -462,7 +462,7 @@ def library_matching(combined_data,
 def _log_predictions(true_keys, predicted_keys, ranks, global_step, log_dir):
   output_file = path.join(log_dir,
                           '%d.library_matching_predictions.txt' % global_step)
-  with tf.gfile.Open(output_file, 'w') as f:
+  with tf.io.gfile.GFile(output_file, 'w') as f:
     for true_key, predicted_key, rank in zip(true_keys, predicted_keys, ranks):
       f.write('%s %s %d\n' % (true_key[0], predicted_key[0], rank))
   return np.int32(0)
@@ -480,15 +480,15 @@ def _make_logging_ops(true_keys, predicted_keys, ranks, log_dir):
     all_ranks.extend(batch_ranks)
     return np.int32(0)
 
-  update_op = tf.py_func(_extend_keys, [true_keys, predicted_keys, ranks],
+  update_op = tf.compat.v1.py_func(_extend_keys, [true_keys, predicted_keys, ranks],
                          [tf.int32])[0]
 
   def _write_log_to_file(global_step):
     return _log_predictions(all_true_keys, all_predicted_keys, all_ranks,
                             global_step, log_dir)
 
-  value_op = tf.py_func(_write_log_to_file,
-                        [tf.train.get_or_create_global_step()], [tf.int32])[0]
+  value_op = tf.compat.v1.py_func(_write_log_to_file,
+                        [tf.compat.v1.train.get_or_create_global_step()], [tf.int32])[0]
 
   return (value_op, update_op)
 
@@ -539,30 +539,30 @@ def library_match_accuracy(combined_data,
         true_inchikeys, predicted_inchikeys, best_query_ranks, log_dir)
 
   correct_prediction = tf.equal(true_inchikeys, predicted_inchikeys)
-  metrics_dict['library_matching_accuracy'] = tf.metrics.mean(
+  metrics_dict['library_matching_accuracy'] = tf.compat.v1.metrics.mean(
       correct_prediction)
 
   metrics_dict[
-      'library_matching_fingerprint_jaccard_similarity'] = tf.metrics.mean_iou(
+      'library_matching_fingerprint_jaccard_similarity'] = tf.compat.v1.metrics.mean_iou(
           tf.cast(true_data[FP_NAME_FOR_JACCARD_SIMILARITY] > 0, tf.int32),
           tf.cast(predicted_data[FP_NAME_FOR_JACCARD_SIMILARITY] > 0, tf.int32),
           2)
 
-  metrics_dict['library_match_similarity'] = tf.metrics.mean(
+  metrics_dict['library_match_similarity'] = tf.compat.v1.metrics.mean(
       predicted_data['similarity'])
-  metrics_dict['ground_truth_similarity'] = tf.metrics.mean(
+  metrics_dict['ground_truth_similarity'] = tf.compat.v1.metrics.mean(
       true_data['similarity'])
 
-  metrics_dict['average_query_rank'] = tf.metrics.mean(best_query_ranks)
+  metrics_dict['average_query_rank'] = tf.compat.v1.metrics.mean(best_query_ranks)
 
   for i in [5, 10, 25, 50, 100]:
-    metrics_dict['recall@%d' % i] = tf.metrics.mean(best_query_ranks < i)
+    metrics_dict['recall@%d' % i] = tf.compat.v1.metrics.mean(best_query_ranks < i)
 
-  metrics_dict['mean_reciprocal_rank'] = tf.metrics.mean(
-      tf.pow(tf.to_float(best_query_ranks) + 1, -1))
+  metrics_dict['mean_reciprocal_rank'] = tf.compat.v1.metrics.mean(
+      tf.pow(tf.cast(best_query_ranks, dtype=tf.float32) + 1, -1))
 
   avg_query_ranks = true_data['rank']['avg']
-  metrics_dict['avg-rank-average_query_rank'] = tf.metrics.mean(avg_query_ranks)
+  metrics_dict['avg-rank-average_query_rank'] = tf.compat.v1.metrics.mean(avg_query_ranks)
 
   num_candidates_with_better_scores = true_data['rank']['lowest']
   num_candidates_with_worse_scores = (
@@ -574,12 +574,12 @@ def library_match_accuracy(combined_data,
       1 +
       (num_candidates_with_better_scores - num_candidates_with_worse_scores) /
       (num_library_elements - 1))
-  metrics_dict['relative_ranking_position'] = tf.metrics.mean(
+  metrics_dict['relative_ranking_position'] = tf.compat.v1.metrics.mean(
       relative_ranking_position)
 
   for i in [5, 10, 25, 50, 100]:
     metrics_dict['avg-rank-recall@%d' %
-                 i] = tf.metrics.mean(avg_query_ranks < i)
+                 i] = tf.compat.v1.metrics.mean(avg_query_ranks < i)
 
   return (metrics_dict, library_entry_of_prediction,
           predicted_data[fmap_constants.INCHIKEY])

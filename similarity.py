@@ -76,7 +76,7 @@ class CosineSimilarityProvider(SimilarityProvider):
 
   def make_training_loss(self, true_tensor, predicted_tensor):
     return tf.reduce_mean(
-        tf.losses.mean_squared_error(true_tensor, predicted_tensor))
+        tf.compat.v1.losses.mean_squared_error(true_tensor, predicted_tensor))
 
 
 class GeneralizedCosineSimilarityProvider(CosineSimilarityProvider):
@@ -110,7 +110,7 @@ class GeneralizedCosineSimilarityProvider(CosineSimilarityProvider):
       return tf.reduce_mean(weighted_squared_error)
     else:
       return tf.reduce_mean(
-          tf.losses.mean_squared_error(true_tensor, predicted_tensor))
+          tf.compat.v1.losses.mean_squared_error(true_tensor, predicted_tensor))
 
 
 def max_margin_ranking_loss(predictions, target_indices, library,
@@ -152,8 +152,8 @@ def max_margin_ranking_loss(predictions, target_indices, library,
                                  similarities + margin)
 
   margin_violators = tf.cast(margin_violations > 0, tf.int32)
-  margin_violators_per_batch_element = tf.to_float(
-      tf.reduce_sum(margin_violators, axis=1, keep_dims=True))
+  margin_violators_per_batch_element = tf.cast(
+      tf.reduce_sum(margin_violators, axis=1, keepdims=True), dtype=tf.float32)
   margin_violators_per_batch_element = tf.maximum(
       margin_violators_per_batch_element, 1.)
   margin_violators_per_batch_element = tf.stop_gradient(
@@ -163,4 +163,4 @@ def max_margin_ranking_loss(predictions, target_indices, library,
   weighted_margin_violations = (
       margin_violations / margin_violators_per_batch_element)
   return tf.reduce_sum(weighted_margin_violations) / tf.maximum(
-      tf.to_float(batch_size), 1.)
+      tf.cast(batch_size, dtype=tf.float32), 1.)

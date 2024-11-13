@@ -20,8 +20,8 @@ class DummySpectraPredictor(spectra_predictor.SpectraPredictor):
   """A test class that returns the mol weight input as the spectra prediction."""
 
   def _setup_prediction_op(self):
-    fingerprint_input_op = tf.placeholder(tf.float32, (None, 4096))
-    mol_weight_input_op = tf.placeholder(tf.float32, (None, 1))
+    fingerprint_input_op = tf.compat.v1.placeholder(tf.float32, (None, 4096))
+    mol_weight_input_op = tf.compat.v1.placeholder(tf.float32, (None, 1))
 
     feature_dict = {
         self.fingerprint_input_key: fingerprint_input_op,
@@ -44,7 +44,7 @@ class SpectraPredictorTest(tf.test.TestCase):
                                         "test_2_mend.sdf")
 
   def tearDown(self):
-    tf.reset_default_graph()
+    tf.compat.v1.reset_default_graph()
     tf.io.gfile.rmtree(self.temp_dir)
     super(SpectraPredictorTest, self).tearDown()
 

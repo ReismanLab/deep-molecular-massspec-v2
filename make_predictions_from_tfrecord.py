@@ -87,7 +87,7 @@ def _make_features_and_labels_from_tfrecord(input_file_pattern, hparams,
 
     return tmp_file
 
-  input_files = tf.gfile.Glob(input_file_pattern)
+  input_files = tf.io.gfile.glob(input_file_pattern)
   if not input_files:
     raise ValueError('No files found matching %s' % input_file_pattern)
 
@@ -103,7 +103,7 @@ def _make_features_and_labels_from_tfrecord(input_file_pattern, hparams,
       features_to_load=features_to_load,
       data_dir=data_dir,
       load_library_matching_data=False)
-  tf.gfile.Remove(dataset_config_file)
+  tf.io.gfile.remove(dataset_config_file)
   return input_fn()
 
 
@@ -164,7 +164,7 @@ def main(_):
 
   results = {}
   results_dir = os.path.dirname(FLAGS.output_file)
-  tf.gfile.MakeDirs(results_dir)
+  tf.io.gfile.makedirs(results_dir)
 
   def process_fetched_values_fn(fetched_values):
     """Processes output values from estimator."""
@@ -187,7 +187,7 @@ def main(_):
   util.run_graph_and_process_results(ops_to_fetch, FLAGS.model_checkpoint_path,
                                      process_fetched_values_fn)
 
-  tf.gfile.MakeDirs(os.path.dirname(FLAGS.output_file))
+  tf.io.gfile.makedirs(os.path.dirname(FLAGS.output_file))
   np.save(FLAGS.output_file, results)
 
 
@@ -195,4 +195,4 @@ if __name__ == '__main__':
   for flag in ['input_file', 'model_checkpoint_path', 'output_file']:
     flags.mark_flag_as_required(flag)
 
-  tf.app.run(main)
+  tf.compat.v1.app.run(main)

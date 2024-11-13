@@ -219,7 +219,7 @@ def write_list_of_inchikeys(inchikey_list, base_name, output_dir):
   """Write list of inchikeys as a text file."""
   inchikey_list_name = base_name + INCHIKEY_FILENAME_END
 
-  with tf.gfile.Open(os.path.join(output_dir, inchikey_list_name),
+  with tf.io.gfile.GFile(os.path.join(output_dir, inchikey_list_name),
                      'w') as writer:
     for inchikey in inchikey_list:
       writer.write('%s\n' % inchikey)
@@ -397,14 +397,14 @@ def write_json_for_experiment(experiment_setup, output_dir):
   experiment_json_dict[
       ds_constants.TRAINING_SPECTRA_ARRAY_KEY] = training_spectra_filename
 
-  with tf.gfile.Open(os.path.join(output_dir, experiment_setup.json_name),
+  with tf.io.gfile.GFile(os.path.join(output_dir, experiment_setup.json_name),
                      'w') as writer:
     experiment_json = json.dumps(experiment_json_dict)
     writer.write(experiment_json)
 
 
 def main(_):
-  tf.gfile.MkDir(FLAGS.output_master_dir)
+  tf.io.gfile.mkdir(FLAGS.output_master_dir)
 
   main_train_val_test_fractions_tuple = tuple(
       [float(elem) for elem in FLAGS.main_train_val_test_fractions])

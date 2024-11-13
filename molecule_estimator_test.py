@@ -64,7 +64,7 @@ class MoleculeEstimatorTest(tf.test.TestCase, parameterized.TestCase):
     default_dataset_config[
         ds_constants.TRAINING_SPECTRA_ARRAY_KEY] = os.path.join(
             self.test_data_directory, 'test_14.spectra_library.npy')
-    with tf.gfile.Open(self.default_dataset_config_file, 'w') as f:
+    with tf.io.gfile.GFile(self.default_dataset_config_file, 'w') as f:
       json.dump(default_dataset_config, f)
 
     # Test estimator behavior when predicted set is empty
@@ -75,7 +75,7 @@ class MoleculeEstimatorTest(tf.test.TestCase, parameterized.TestCase):
     baseline_dataset_config[
         ds_constants.TRAINING_SPECTRA_ARRAY_KEY] = os.path.join(
             self.test_data_directory, 'test_14.spectra_library.npy')
-    with tf.gfile.Open(self.baseline_dataset_config_file, 'w') as f:
+    with tf.io.gfile.GFile(self.baseline_dataset_config_file, 'w') as f:
       json.dump(baseline_dataset_config, f)
 
     # Test estimator behavior when observed set is empty
@@ -86,19 +86,19 @@ class MoleculeEstimatorTest(tf.test.TestCase, parameterized.TestCase):
     all_predicted_dataset_config[
         ds_constants.TRAINING_SPECTRA_ARRAY_KEY] = os.path.join(
             self.test_data_directory, 'test_14.spectra_library.npy')
-    with tf.gfile.Open(self.all_predicted_dataset_config_file, 'w') as f:
+    with tf.io.gfile.GFile(self.all_predicted_dataset_config_file, 'w') as f:
       json.dump(all_predicted_dataset_config, f)
 
   def tearDown(self):
-    tf.gfile.DeleteRecursively(self.temp_dir)
+    tf.io.gfile.rmtree(self.temp_dir)
     super(MoleculeEstimatorTest, self).tearDown()
 
   def _get_loss_history(self, checkpoint_dir):
     """Get list of train losses from events file."""
     losses = []
-    for event_file in tf.gfile.Glob(
+    for event_file in tf.io.gfile.glob(
         os.path.join(checkpoint_dir, 'events.out.tfevents.*')):
-      for event in tf.train.summary_iterator(event_file):
+      for event in tf.compat.v1.train.summary_iterator(event_file):
         for v in event.summary.value:
           if v.tag == 'loss':
             losses.append(v.simple_value)
@@ -126,7 +126,7 @@ class MoleculeEstimatorTest(tf.test.TestCase, parameterized.TestCase):
     if not np.isfinite(loss):
       raise ValueError('Final loss is not finite: %f' % loss)
 
-    tf.logging.info('initial loss : {} final loss : {}'.format(init_loss, loss))
+    tf.compat.v1.logging.info('initial loss : {} final loss : {}'.format(init_loss, loss))
 
     self.assertNotEqual(loss, init_loss,
                         ('Loss did not change after brief testing: '

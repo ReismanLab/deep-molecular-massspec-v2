@@ -50,8 +50,8 @@ def get_similarities(raw_spectra_array):
     norm_spectra = cos_similarity._normalize_rows(intensity_adjusted_spectra)
     similarity = cos_similarity.compute_similarity(norm_spectra, norm_spectra)
 
-    with tf.Session() as sess:
-        sess.run(tf.global_variables_initializer())
+    with tf.compat.v1.Session() as sess:
+        sess.run(tf.compat.v1.global_variables_initializer())
         dist = sess.run(similarity)
 
     return dist

@@ -39,7 +39,7 @@ class LibraryMatchingTest(tf.test.TestCase):
     library = np.float32(np.random.normal(size=(num_examples, data_dim)))
     library = tf.constant(library)
     library = similarity.preprocess_library(library)
-    query_idx = tf.placeholder(shape=(), dtype=tf.int32)
+    query_idx = tf.compat.v1.placeholder(shape=(), dtype=tf.int32)
     query = library[query_idx][np.newaxis, ...]
     (match_idx_op, match_similarity_op, _, _,
      _) = library_matching._max_similarity_match(library, query, similarity)
@@ -47,7 +47,7 @@ class LibraryMatchingTest(tf.test.TestCase):
     # Use queries that are rows of the library. This means that the maximum
     # cosine similarity is 1.0 and is achieved by the row index of the query
     # in the library.
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
       for _ in range(num_trials):
         idx = np.random.randint(0, high=num_examples)
         match_idx, match_similarity = sess.run(
@@ -119,7 +119,7 @@ class LibraryMatchingTest(tf.test.TestCase):
     return [('%s%d' % (prefix, uid)).encode('utf-8') for uid in range(num_ids)]
 
   def _random_fingerprint(self, num_elements):
-    return tf.to_float(tf.random_uniform(shape=(num_elements, 1024)) > 0.5)
+    return tf.cast(tf.random.uniform(shape=(num_elements, 1024)) > 0.5, dtype=tf.float32)
 
   def _package_data(self, ids, spectrum, masses):
 
@@ -175,8 +175,8 @@ class LibraryMatchingTest(tf.test.TestCase):
         library_matching.library_matching(library_matching_data, predictor_fn,
                                           similarity, mass_tolerance, 10))
 
-    with tf.Session() as sess:
-      sess.run(tf.local_variables_initializer())
+    with tf.compat.v1.Session() as sess:
+      sess.run(tf.compat.v1.local_variables_initializer())
       return sess.run([predicted_data, true_data])
 
   def tf_vs_np_library_matching_test_helper(self,
@@ -393,8 +393,8 @@ class LibraryMatchingTest(tf.test.TestCase):
         similarity_provider=similarity_lib.CosineSimilarityProvider(),
         mass_tolerance=3.0)
 
-    with tf.Session() as sess:
-      sess.run(tf.local_variables_initializer())
+    with tf.compat.v1.Session() as sess:
+      sess.run(tf.compat.v1.local_variables_initializer())
       predictions = sess.run(predicted_data[fmap_constants.INCHIKEY])
 
     self.assertAllEqual(expected_predictions, predictions)
@@ -431,8 +431,8 @@ class LibraryMatchingTest(tf.test.TestCase):
         similarity_provider=similarity_lib.CosineSimilarityProvider(),
         mass_tolerance=3.0)
 
-    with tf.Session() as sess:
-      sess.run(tf.local_variables_initializer())
+    with tf.compat.v1.Session() as sess:
+      sess.run(tf.compat.v1.local_variables_initializer())
       predictions = sess.run(predicted_data[fmap_constants.INCHIKEY])
 
     self.assertAllEqual(expected_predictions, predictions)

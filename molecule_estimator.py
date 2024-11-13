@@ -102,7 +102,7 @@ def make_input_fn(dataset_config_file,
   Returns:
     A function for creating features and labels from a dataset.
   """
-  with tf.gfile.Open(dataset_config_file, 'r') as f:
+  with tf.io.gfile.GFile(dataset_config_file, 'r') as f:
     filenames = json.load(f)
 
   if data_dir is None:
@@ -194,10 +194,10 @@ def _log_command_line_string(model_type, model_dir, hparams):
 
   config_string += ' --hparams=%s\n' % hparams_string
   output_file = os.path.join(model_dir, OUTPUT_HPARAMS_CONFIG_FILE_BASE)
-  tf.gfile.MakeDirs(model_dir)
-  tf.logging.info('Writing command line config string to %s.' % output_file)
+  tf.io.gfile.makedirs(model_dir)
+  tf.compat.v1.logging.info('Writing command line config string to %s.' % output_file)
 
-  with tf.gfile.Open(output_file, 'w') as f:
+  with tf.io.gfile.GFile(output_file, 'w') as f:
     f.write(config_string)
 
 
@@ -232,7 +232,7 @@ def make_model_fn(prediction_helper, dataset_config_file, model_dir):
     if mode == tf.estimator.ModeKeys.TRAIN:
       train_op = tf.contrib.layers.optimize_loss(
           loss=loss_op,
-          global_step=tf.train.get_global_step(),
+          global_step=tf.compat.v1.train.get_global_step(),
           clip_gradients=params.gradient_clip,
           learning_rate=params.learning_rate,
           optimizer='Adam')
@@ -310,4 +310,4 @@ def main(_):
 
 
 if __name__ == '__main__':
-  tf.app.run(main)
+  tf.compat.v1.app.run(main)

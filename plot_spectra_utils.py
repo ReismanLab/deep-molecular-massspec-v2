@@ -208,11 +208,11 @@ def plot_true_and_predicted_spectra(
     if not output_filename.endswith('.png') or output_filename.endswith('.eps'):
       output_filename += '.png'
 
-    with tf.gfile.GFile(output_filename, 'wb') as out:
+    with tf.io.gfile.GFile(output_filename, 'wb') as out:
       image = PilImage.fromarray(data).convert('RGB')
       image.save(out, dpi=(SPECTRA_PLOT_DPI, SPECTRA_PLOT_DPI))
 
-  tf.logging.info('Shape of spectra plot data {} '.format(np.shape(data)))
+  tf.compat.v1.logging.info('Shape of spectra plot data {} '.format(np.shape(data)))
 
   plt.close(figure)
 
@@ -317,29 +317,29 @@ def spectra_plot_summary_op(inchikey_list,
                                                   inchikey_to_plot)
   spectra_variable_name = 'spectrum_{}_plot_{}'.format(plot_mode_key,
                                                        inchikey_to_plot)
-  with tf.name_scope(metric_namescope):
+  with tf.compat.v1.name_scope(metric_namescope):
     # Whether the inchikey_to_plot is in the current batch.
-    update_image_bool = tf.py_func(_should_update_image, [inchikey_list],
+    update_image_bool = tf.compat.v1.py_func(_should_update_image, [inchikey_list],
                                    tf.bool)
 
     if plot_mode_key == PlotModeKeys.LIBRARY_MATCHED_SPECTRUM:
-      spectra_plot = tf.py_func(make_plot, [
+      spectra_plot = tf.compat.v1.py_func(make_plot, [
           inchikey_to_plot, plot_mode_key, update_image_bool, inchikey_list,
           true_spectra, prediction_batch, image_directory,
           library_match_inchikeys
       ], tf.uint8)
     elif plot_mode_key == PlotModeKeys.PREDICTED_SPECTRUM:
-      spectra_plot = tf.py_func(make_plot, [
+      spectra_plot = tf.compat.v1.py_func(make_plot, [
           inchikey_to_plot, plot_mode_key, update_image_bool, inchikey_list,
           true_spectra, prediction_batch, image_directory
       ], tf.uint8)
 
     # Container for the plot. this value will only be assigned to something
     # new if the target inchikey is in the input batch.
-    spectra_plot_variable = tf.get_local_variable(
+    spectra_plot_variable = tf.compat.v1.get_local_variable(
         spectra_variable_name,
         shape=((1,) + SPECTRA_PLOT_DIMENSIONS_RGB),
-        initializer=tf.constant_initializer(128),
+        initializer=tf.compat.v1.constant_initializer(128),
         dtype=tf.uint8)
 
     # A function that add the spectra plot as metric.
@@ -380,7 +380,7 @@ def inchikeys_for_plotting(dataset_config_file, num_inchikeys_to_read,
     list [num_inchikeys_to_read] containing inchikey strings.
   """
   dataset_config_file_dir = os.path.split(dataset_config_file)[0]
-  with tf.gfile.Open(dataset_config_file, 'r') as f:
+  with tf.io.gfile.GFile(dataset_config_file, 'r') as f:
     line = f.read()
     filenames = json.loads(line)
     test_inchikey_list_name = os.path.splitext(filenames[
@@ -388,7 +388,7 @@ def inchikeys_for_plotting(dataset_config_file, num_inchikeys_to_read,
 
   inchikey_list_for_plotting = []
 
-  with tf.gfile.Open(
+  with tf.io.gfile.GFile(
       os.path.join(dataset_config_file_dir, test_inchikey_list_name)) as f:
     for line_idx, line in enumerate(f):
       if line_idx % eval_batch_size == 0:
@@ -397,7 +397,7 @@ def inchikeys_for_plotting(dataset_config_file, num_inchikeys_to_read,
         break
 
   if len(inchikey_list_for_plotting) < num_inchikeys_to_read:
-    tf.logging.warn('Dataset specified by {} has fewer than'
+    tf.compat.v1.logging.warn('Dataset specified by {} has fewer than'
                     '{} inchikeys. Returning {} for plotting'.format(
                         dataset_config_file,
                         num_inchikeys_to_read * eval_batch_size,

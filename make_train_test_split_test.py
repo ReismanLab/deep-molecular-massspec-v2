@@ -57,7 +57,7 @@ class MakeTrainTestSplitTest(tf.test.TestCase, parameterized.TestCase):
     self.inchikey_list_small = list(self.inchikey_dict_small.keys())
 
   def tearDown(self):
-    tf.gfile.DeleteRecursively(self.temp_dir)
+    tf.io.gfile.rmtree(self.temp_dir)
     super(MakeTrainTestSplitTest, self).tearDown()
 
   def encode(self, value):
@@ -194,7 +194,7 @@ class MakeTrainTestSplitTest(tf.test.TestCase, parameterized.TestCase):
 
     for experiment_setup in ds_constants.EXPERIMENT_SETUPS_LIST:
       # Create experiment json files
-      tf.logging.info('Writing experiment setup for %s',
+      tf.compat.v1.logging.info('Writing experiment setup for %s',
                       experiment_setup.json_name)
       make_train_test_split.check_experiment_setup(
           experiment_setup.experiment_setup_dataset_dict,
@@ -204,9 +204,9 @@ class MakeTrainTestSplitTest(tf.test.TestCase, parameterized.TestCase):
 
       # Check that physical files for library matching contain all inchikeys
       dict_from_json = json.load(
-          tf.gfile.Open(os.path.join(fpath, experiment_setup.json_name)))
+          tf.io.gfile.GFile(os.path.join(fpath, experiment_setup.json_name)))
 
-      tf.logging.info(dict_from_json)
+      tf.compat.v1.logging.info(dict_from_json)
       library_files = (
           dict_from_json[ds_constants.LIBRARY_MATCHING_OBSERVED_KEY] +
           dict_from_json[ds_constants.LIBRARY_MATCHING_PREDICTED_KEY])
@@ -238,7 +238,7 @@ class MakeTrainTestSplitTest(tf.test.TestCase, parameterized.TestCase):
       features, labels = parse_sdf_utils.make_features_and_labels(
           dataset, feature_names, label_names, mode=tf.estimator.ModeKeys.EVAL)
 
-      with tf.Session() as sess:
+      with tf.compat.v1.Session() as sess:
         feature_values, _ = sess.run([features, labels])
 
       inchikeys_from_file = [

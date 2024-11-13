@@ -424,7 +424,7 @@ class ParseSdfUtilsTest(tf.test.TestCase, absltest.TestCase):
     features, _ = parse_sdf_utils.make_features_and_labels(
         dataset, feature_names, label_names, mode=tf.estimator.ModeKeys.EVAL)
 
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
       feature_values = sess.run(features)
 
       # Check that the dataset was consumed
@@ -546,7 +546,7 @@ class ParseSdfUtilsTest(tf.test.TestCase, absltest.TestCase):
     features, _ = parse_sdf_utils.make_features_and_labels(
         dataset, feature_names, label_names, mode=tf.estimator.ModeKeys.EVAL)
 
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
       feature_values = sess.run(features)
 
       # Check that the dataset was consumed

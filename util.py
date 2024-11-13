@@ -25,7 +25,7 @@ def _get_ckpt_from_path(path):
   ckpt = tf.train.latest_checkpoint(path)
   if ckpt is None:
     raise ValueError('No checkpoint found in %s' % path)
-  tf.logging.info('Reading from checkpoint %s', ckpt)
+  tf.compat.v1.logging.info('Reading from checkpoint %s', ckpt)
   return ckpt
 
 
@@ -50,9 +50,9 @@ def run_graph_and_process_results(ops_to_fetch,
     message will be printed.
   """
   ckpt = _get_ckpt_from_path(model_checkpoint_path)
-  saver = tf.train.Saver()
+  saver = tf.compat.v1.train.Saver()
 
-  with tf.Session() as sess:
+  with tf.compat.v1.Session() as sess:
     saver.restore(sess, ckpt)
     counter = 0
     while True:
@@ -61,9 +61,9 @@ def run_graph_and_process_results(ops_to_fetch,
         process_fetched_values_fn(fetched_values)
         counter += 1
         if counter % logging_frequency == 0:
-          tf.logging.info('Total examples processed so far: %d', counter)
+          tf.compat.v1.logging.info('Total examples processed so far: %d', counter)
       except tf.errors.OutOfRangeError:
-        tf.logging.info('Finished processing data. Processed %d batches',
+        tf.compat.v1.logging.info('Finished processing data. Processed %d batches',
                         counter)
         break
 
@@ -71,7 +71,7 @@ def run_graph_and_process_results(ops_to_fetch,
 def map_predictor(input_op, predictor_fn, sub_batch_size):
   """Wrapper for tf.map_fn to do batched computation within each map step."""
 
-  num_elements = tf.contrib.framework.nest.flatten(input_op)[0].shape[0].value
+  num_elements = tf.nest.flatten(input_op)[0].shape[0].value
 
   # Only chop the batch dim into sub-batches if the input data is big.
   if num_elements < sub_batch_size:
@@ -93,7 +93,7 @@ def map_predictor(input_op, predictor_fn, sub_batch_size):
     output_shape = [-1, sub_batch_size] + shape[1:]
     return tf.reshape(tensor, shape=output_shape)
 
-  reshaped_inputs = tf.contrib.framework.nest.map_structure(reshape, input_op)
+  reshaped_inputs = tf.nest.map_structure(reshape, input_op)
 
   mapped_prediction = tf.map_fn(
       predictor_fn,
@@ -141,9 +141,9 @@ def get_static_shape_without_adding_ops(inputs, fn):
       if tensor is None:
         return None
       else:
-        return tf.placeholder(shape=tensor.shape, dtype=tensor.dtype)
+        return tf.compat.v1.placeholder(shape=tensor.shape, dtype=tensor.dtype)
 
-    placeholders = tf.contrib.framework.nest.map_structure(make_placeholder,
+    placeholders = tf.nest.map_structure(make_placeholder,
                                                            inputs)
     output_shape = fn(placeholders).shape.as_list()
 
@@ -154,7 +154,7 @@ def get_static_shape_without_adding_ops(inputs, fn):
 def value_op_with_initializer(value_op_fn, init_op_fn):
   """Make value_op that gets set by idempotent init_op on first invocation."""
 
-  init_has_been_run = tf.get_local_variable(
+  init_has_been_run = tf.compat.v1.get_local_variable(
       'has_been_run',
       initializer=np.zeros(shape=(), dtype=np.bool),
       dtype=tf.bool)
@@ -192,7 +192,7 @@ def scatter_by_anchor_indices(anchor_indices, data, index_shift):
   anchor_indices = tf.convert_to_tensor(anchor_indices)
   data = tf.convert_to_tensor(data)
 
-  num_data_columns = data.shape[-1].value
+  num_data_columns = data.shape[-1]
   indices = np.arange(num_data_columns)[np.newaxis, ...]
   shifted_indices = anchor_indices[..., tf.newaxis] - indices + index_shift
   valid_indices = shifted_indices >= 0
@@ -226,7 +226,7 @@ def scatter_by_anchor_indices(anchor_indices, data, index_shift):
       dense_shape=dense_shape)
 
   flattened_data = tf.reshape(data, [-1])[..., tf.newaxis]
-  flattened_output = tf.sparse_tensor_dense_matmul(
+  flattened_output = tf.sparse.sparse_dense_matmul(
       scattering_matrix,
       flattened_data,
       adjoint_a=False,

@@ -110,7 +110,7 @@ def get_sdf_to_mol(
 
   # Save failed sdf blocks to disk if pathname specified.
   if fail_sdf_fname is not None and fail_sdf_blocks is not None:
-    with tf.gfile.Open(fail_sdf_fname, 'w') as f:
+    with tf.io.gfile.GFile(fail_sdf_fname, 'w') as f:
       f.write(fail_sdf_blocks)
 
   if num_failed:
@@ -345,8 +345,8 @@ def write_dicts_to_example(mol_list,
     - Writes np.array (len(mol_list), max_mass_spec_peak_loc) to
       true_library_array_path_name if it is defined.
   """
-  options = tf.python_io.TFRecordOptions(
-      tf.python_io.TFRecordCompressionType.ZLIB)
+  options = tf.io.TFRecordOptions(
+      tf.compat.v1.python_io.TFRecordCompressionType.ZLIB)
 
   # Wrapper function to add index value to dictionary
   if true_library_array_path_name:
@@ -368,14 +368,14 @@ def write_dicts_to_example(mol_list,
 
     make_mol_dict_fn = make_mol_dict_without_saved_array
 
-  with tf.python_io.TFRecordWriter(record_path_name, options) as writer:
+  with tf.io.TFRecordWriter(record_path_name, options) as writer:
     for idx, mol in enumerate(mol_list):
       mol_dict = make_mol_dict_fn(idx, mol)
       example = dict_to_tfexample(mol_dict)
       writer.write(example.SerializeToString())
 
   if true_library_array_path_name:
-    with tf.gfile.Open(true_library_array_path_name, 'w') as f:
+    with tf.io.gfile.GFile(true_library_array_path_name, 'w') as f:
       np.save(f, spectra_matrix)
 
 
@@ -383,7 +383,7 @@ def write_info_file(mol_list, fname):
   """Write metadata for mol_list to fname.info."""
 
   num_elements = len(mol_list)
-  with tf.gfile.Open(fname + '.info', 'w') as f:
+  with tf.io.gfile.GFile(fname + '.info', 'w') as f:
     f.write('%d\n' % num_elements)
 
 
@@ -403,7 +403,7 @@ def parse_info_file(fname):
   info_file = fname + '.info'
 
   info_dict = {}
-  with tf.gfile.Open(info_file, 'r') as f:
+  with tf.io.gfile.GFile(info_file, 'r') as f:
     first_line = f.readline()
     info_dict['num_examples'] = int(first_line)
 
@@ -448,38 +448,38 @@ def _parse_example(example_protos, hparams, features_to_load):
   """
   features = {
       fmap_constants.MOLECULE_WEIGHT:
-          tf.FixedLenFeature([1], tf.float32),
+          tf.io.FixedLenFeature([1], tf.float32),
       fmap_constants.ATOM_WEIGHTS:
-          tf.FixedLenFeature([hparams.max_atoms], tf.float32),
+          tf.io.FixedLenFeature([hparams.max_atoms], tf.float32),
       fmap_constants.ATOM_IDS:
-          tf.FixedLenFeature([hparams.max_atoms], tf.int64),
+          tf.io.FixedLenFeature([hparams.max_atoms], tf.int64),
       fmap_constants.ADJACENCY_MATRIX:
-          tf.FixedLenFeature([hparams.max_atoms * hparams.max_atoms], tf.int64),
+          tf.io.FixedLenFeature([hparams.max_atoms * hparams.max_atoms], tf.int64),
       fmap_constants.DENSE_MASS_SPEC:
-          tf.FixedLenFeature([hparams.max_mass_spec_peak_loc], tf.float32),
+          tf.io.FixedLenFeature([hparams.max_mass_spec_peak_loc], tf.float32),
       fmap_constants.INCHIKEY:
-          tf.FixedLenFeature([1], tf.string, default_value=''),
+          tf.io.FixedLenFeature([1], tf.string, default_value=''),
       fmap_constants.MOLECULAR_FORMULA:
-          tf.FixedLenFeature([1], tf.string, default_value=''),
+          tf.io.FixedLenFeature([1], tf.string, default_value=''),
       fmap_constants.NAME:
-          tf.FixedLenFeature([1], tf.string, default_value=''),
+          tf.io.FixedLenFeature([1], tf.string, default_value=''),
       fmap_constants.SMILES:
-          tf.FixedLenFeature([1], tf.string, default_value=''),
+          tf.io.FixedLenFeature([1], tf.string, default_value=''),
       fmap_constants.INDEX_TO_GROUND_TRUTH_ARRAY:
-          tf.FixedLenFeature([1], tf.int64, default_value=0),
+          tf.io.FixedLenFeature([1], tf.int64, default_value=0),
       fmap_constants.SMILES_TOKEN_LIST_LENGTH:
-          tf.FixedLenFeature([1], tf.int64, default_value=0)
+          tf.io.FixedLenFeature([1], tf.int64, default_value=0)
   }
 
   for fp_len in ms_constants.NUM_CIRCULAR_FP_BITS_LIST:
     for rad in ms_constants.CIRCULAR_FP_RADII_LIST:
       for fp_type in fmap_constants.FP_TYPE_LIST:
         fp_key = ms_constants.CircularFingerprintKey(fp_type, fp_len, rad)
-        features[str(fp_key)] = tf.FixedLenFeature([fp_key.fp_len], tf.float32)
+        features[str(fp_key)] = tf.io.FixedLenFeature([fp_key.fp_len], tf.float32)
   if features_to_load is not None:
     features = {key: features[key] for key in features_to_load}
 
-  parsed_features = tf.parse_single_example(example_protos, features=features)
+  parsed_features = tf.io.parse_single_example(example_protos, features=features)
 
   if (features_to_load is None or
       fmap_constants.ADJACENCY_MATRIX in features_to_load):
@@ -494,7 +494,7 @@ def _parse_example(example_protos, hparams, features_to_load):
 
   if (features_to_load is None or fmap_constants.SMILES in features_to_load):
     smiles_string = parsed_features[fmap_constants.SMILES]
-    index_array = tf.py_func(feature_utils.tokenize_smiles,
+    index_array = tf.compat.v1.py_func(feature_utils.tokenize_smiles,
                              [smiles_string], [tf.int64])
     index_array = tf.reshape(index_array, (-1,))
     parsed_features[fmap_constants.SMILES] = index_array
@@ -525,7 +525,7 @@ def get_dataset_in_one_batch(dataset, total_data_length):
       tensor.set_shape(shape)
       return tensor
 
-    return tf.contrib.framework.nest.map_structure(
+    return tf.nest.map_structure(
         _set_static_batch_dimension_for_tensor, data)
 
   return dataset.map(_set_static_batch_dimension)
@@ -561,7 +561,7 @@ def get_dataset_from_record(fnames,
 
   if mode == tf.estimator.ModeKeys.TRAIN and len(fnames) > 1:
     # Throwing this warning because we do not interleave files.
-    tf.logging.warn('Please ensure that shuffle buffer is large enough to'
+    tf.compat.v1.logging.warn('Please ensure that shuffle buffer is large enough to'
                     ' effectively shuffle across all dataset input files.')
 
   if not fnames:
@@ -627,7 +627,7 @@ def make_features_and_labels(dataset, feature_names, label_names, mode):
 
   if mode == tf.estimator.ModeKeys.TRAIN:
     dataset = dataset.repeat()
-  iterator = dataset.make_one_shot_iterator()
+  iterator = tf.compat.v1.data.make_one_shot_iterator(dataset)
   next_element = iterator.get_next()
 
   if fmap_constants.SMILES in feature_names:
@@ -657,7 +657,7 @@ def load_training_spectra_array(spectra_array_path_name):
   Returns:
     np.array with shape (len(training_data), ms_constants.max_peak_loc)
   """
-  with tf.gfile.Open(spectra_array_path_name, 'rb') as f:
+  with tf.io.gfile.GFile(spectra_array_path_name, 'rb') as f:
     spectra_array = np.load(f, encoding='bytes')
 
   return spectra_array
@@ -688,7 +688,7 @@ def validate_spectra_array_contents(record_path_name, hparams,
   features, labels = make_features_and_labels(
       dataset, feature_names, label_names, mode=tf.estimator.ModeKeys.EVAL)
 
-  with tf.Session() as sess:
+  with tf.compat.v1.Session() as sess:
     feature_values, label_values = sess.run([features, labels])
 
   spectra_array = load_training_spectra_array(spectra_array_path_name)

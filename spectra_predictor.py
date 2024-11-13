@@ -12,6 +12,7 @@ from rdkit import Chem
 from rdkit.Chem import AllChem
 import six
 import tensorflow as tf
+import tensorflow_addons as tfa
 
 _DEFAULT_HPARAMS = {
     "radius": 2,
@@ -142,7 +143,7 @@ class SpectraPredictor(object):
     self.molecular_weight_key = fmap_constants.MOLECULE_WEIGHT
 
     self._graph = tf.Graph()
-    self._sess = tf.Session(graph=self._graph)
+    self._sess = tf.compat.v1.Session(graph=self._graph)
     with self._graph.as_default():
       (self._placeholder_dict, self._predict_op) = self._setup_prediction_op()
     assert set(self._placeholder_dict) == set(
@@ -226,8 +227,8 @@ class NeimsSpectraPredictor(SpectraPredictor):
     """Sets up prediction operation and inputs for model."""
     fp_length = self._hparams.fp_length
 
-    fingerprint_input_op = tf.placeholder(tf.float32, (None, fp_length))
-    mol_weight_input_op = tf.placeholder(tf.float32, (None, 1))
+    fingerprint_input_op = tf.compat.v1.placeholder(tf.float32, (None, fp_length))
+    mol_weight_input_op = tf.compat.v1.placeholder(tf.float32, (None, 1))
 
     feature_dict = {
         self.fingerprint_input_key: fingerprint_input_op,
@@ -251,10 +252,10 @@ class NeimsSpectraPredictor(SpectraPredictor):
     """
     with self._graph.as_default():
       if model_checkpoint_dir:
-        saver = tf.train.Saver()
+        saver = tf.compat.v1.train.Saver()
         saver.restore(self._sess,
                       tf.train.latest_checkpoint(model_checkpoint_dir))
       else:
-        tf.logging.warn("No model checkpoint directory given,"
+        tf.compat.v1.logging.warn("No model checkpoint directory given,"
                         " reinitializing model.")
-        self._sess.run(tf.global_variables_initializer())
+        self._sess.run(tf.compat.v1.global_variables_initializer())

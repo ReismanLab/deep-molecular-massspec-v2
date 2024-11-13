@@ -50,7 +50,7 @@ import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
 
-FLAGS = tf.app.flags.FLAGS
+FLAGS = tf.compat.v1.app.flags.FLAGS
 
 tf.flags.DEFINE_string(
     'input_file', None, 'Input TFRecord file or a '
@@ -80,12 +80,12 @@ def _make_features_and_labels_from_tfrecord(input_file_pattern, hparams,
         ds_constants.SPECTRUM_PREDICTION_TRAIN_KEY: input_filenames
     }
 
-    with tf.gfile.Open(tmp_file, 'w') as f:
+    with tf.io.gfile.GFile(tmp_file, 'w') as f:
       json.dump(dataset_config, f)
 
     return tmp_file
 
-  input_files = tf.gfile.Glob(input_file_pattern)
+  input_files = tf.io.gfile.glob(input_file_pattern)
   if not input_files:
     raise ValueError('No files found matching %s' % input_file_pattern)
 
@@ -101,7 +101,7 @@ def _make_features_and_labels_from_tfrecord(input_file_pattern, hparams,
       features_to_load=features_to_load,
       data_dir=data_dir,
       load_library_matching_data=False)
-  tf.gfile.Remove(dataset_config_file)
+  tf.io.gfile.remove(dataset_config_file)
   return input_fn()
 
 
@@ -157,7 +157,7 @@ def main(_):
 
   results = {}
   results_dir = os.path.dirname(FLAGS.output_file)
-  tf.gfile.MakeDirs(results_dir)
+  tf.io.gfile.makedirs(results_dir)
 
   def process_fetched_values_fn(fetched_values):
     if FLAGS.save_spectra_plots:
@@ -182,6 +182,6 @@ def main(_):
 
 if __name__ == '__main__':
   for flag in ['input_file', 'model_checkpoint_path', 'output_file']:
-    tf.app.flags.mark_flag_as_required(flag)
+    tf.compat.v1.app.flags.mark_flag_as_required(flag)
 
-  tf.app.run(main)
+  tf.compat.v1.app.run(main)
