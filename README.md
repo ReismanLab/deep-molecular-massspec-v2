@@ -24,11 +24,7 @@ our model. This task is described in more detail below.
 
 ## Required Packages:
 
-It is recommended to use [Anaconda](https://www.anaconda.com/distribution/) with a Python 3.6 environment to install these packages.
--   [RDKit](https://www.rdkit.org/docs/Install.html)
--   [Tensorflow](https://www.tensorflow.org/install) 
-
-Most of the packages required here can be installed with conda install tensorflow=1.13.2 rdkit matplotlib and pip install absl-py.
+As this code is not compatible with Tensorflow > 2.0, and OSX compatible builds of Tensorflow 1.* are not available, we present this package which updates [deep-molecular-massspec](https://github.com/brain-research/deep-molecular-massspec) to work with Tensorflow > 2.0 and < 2.16 as well with more recent python releases.
 
 ## Quickstart Guide for Making Model Predictions
 
