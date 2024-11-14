@@ -24,7 +24,15 @@ our model. This task is described in more detail below.
 
 ## Required Packages:
 
-As this code is not compatible with Tensorflow > 2.0, and OSX compatible builds of Tensorflow 1.* are not available, we present this package which updates [deep-molecular-massspec](https://github.com/brain-research/deep-molecular-massspec) to work with Tensorflow > 2.0 and < 2.16 as well with more recent python releases.
+As this original package was not compatible with Tensorflow > 2.0, and OSX compatible builds of Tensorflow 1.* are not available, we present this package which updates [deep-molecular-massspec](https://github.com/brain-research/deep-molecular-massspec) to work with Tensorflow > 2.0 and < 2.16 as well with more recent Python releases.
+
+## Environment setup
+
+Create and activate a conda environment from the neims_2.yml file as follows:
+```
+conda env create -f neims_2.yml
+conda activate neims_2
+```
 
 ## Quickstart Guide for Making Model Predictions
 
