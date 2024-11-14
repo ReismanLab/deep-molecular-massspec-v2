@@ -1,0 +1,25 @@
+name: neims_2
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - absl-py
+  - python=3.9.7
+  - matplotlib
+  - pandas
+  - pillow
+  - rdkit
+  - tensorboard-data-server=0.7.0
+  - tensorflow-estimator=2.17.0
+  - pip
+
+  - pip:
+    - keras==2.15.0
+    - openpyxl==3.1.5
+    - tensorboard==2.15.2
+    - tensorflow==2.15.1
+    - tensorflow-addons==0.23.0
+    - tensorflow-io-gcs-filesystem==0.37.1
+    - tqdm==4.67.0
+    - xlrd==2.0.1
+prefix: /Users/anjali/miniconda3/envs/neims_2
